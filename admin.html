@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mato Mart Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.box{background:#fff;width:100%;max-width:420px;padding:30px;border-radius:14px;box-shadow:0 8px 30px #0002}
+h1{text-align:center;margin:0 0 8px}.sub{text-align:center;color:#666;margin-bottom:22px}
+input,select{width:100%;padding:13px;border:1px solid #ccc;border-radius:7px;margin:7px 0 14px;font-size:15px}
+button{border:0;border-radius:7px;padding:11px 15px;font-weight:bold;cursor:pointer}.loginBtn{width:100%;background:#078b0b;color:#fff;font-size:16px}
+.msg{display:none;margin-top:14px;padding:10px;border-radius:7px;background:#ffe0e0;color:#a00}
+.app{display:none}header{background:#222;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}.logo{font-size:23px;font-weight:bold;color:#ff9800}
+.actions{display:flex;gap:8px}.refresh{background:#ff9800;color:#fff}.logout,.delete{background:#e53935;color:#fff}
+.container{max-width:1200px;margin:25px auto;padding:0 18px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}.stat{background:#fff;padding:18px;border-radius:10px;box-shadow:0 2px 8px #0001}.stat small{color:#777}.stat b{display:block;font-size:28px;margin-top:7px}
+.order{background:#fff;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 8px #0001}.head{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:13px}.id{font-size:12px;color:#777;word-break:break-all}.status{padding:7px 10px;border-radius:20px;font-size:12px;font-weight:bold;height:max-content}
+.Pending{background:#fff1c7;color:#805b00}.Accepted{background:#dff0ff;color:#075b99}.Preparing{background:#eadfff;color:#5b2a91}.Delivered{background:#d9f7df;color:#126b2b}.Cancelled{background:#ffdede;color:#a00}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}.card{background:#f7f7f7;padding:12px;border-radius:7px}.card span{display:block;color:#777;font-size:12px;font-weight:bold;margin-bottom:5px}.address{grid-column:1/-1}
+.items{border-top:1px solid #eee;padding-top:13px}.item{display:flex;justify-content:space-between;padding:7px 0}.total{text-align:right;font-size:20px;font-weight:bold;margin-top:10px}.controls{display:flex;gap:8px;margin-top:15px}.controls select{width:auto;margin:0}.update{background:#222;color:#fff}.empty{text-align:center;background:#fff;padding:50px;border-radius:10px;color:#666}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.info{grid-template-columns:1fr}.address{grid-column:auto}header{flex-direction:column;align-items:flex-start;gap:12px}}
+</style>
+</head>
+<body>
+<div id="loginPage" class="login"><div class="box">
+<h1>🔐 Mato Mart Admin</h1><div class="sub">Login to manage customer orders</div>
+<input id="email" type="email" placeholder="Admin Email">
+<input id="password" type="password" placeholder="Password">
+<button class="loginBtn" id="loginBtn">Login</button><div id="msg" class="msg"></div>
+</div></div>
+
+<div id="app" class="app"><header><div class="logo">🍔 Mato Mart Admin</div>
+<div class="actions"><button class="refresh" id="refresh">↻ Refresh</button><button class="logout" id="logout">Logout</button></div></header>
+<div class="container">
+<div class="stats">
+<div class="stat"><small>Total Orders</small><b id="total">0</b></div>
+<div class="stat"><small>Pending</small><b id="pending">0</b></div>
+<div class="stat"><small>Preparing</small><b id="preparing">0</b></div>
+<div class="stat"><small>Delivered</small><b id="delivered">0</b></div>
+</div>
+<div id="orders"></div>
+</div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyCYkctyI9mOD4Uy1W-bCoPSi4lM0l26zOU",
+  authDomain:"mato-mart.firebaseapp.com",
+  databaseURL:"https://mato-mart-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"mato-mart",
+  storageBucket:"mato-mart.firebasestorage.app",
+  messagingSenderId:"762100540752",
+  appId:"1:762100540752:web:3f5d3c9f3dfe5326be3855",
+  measurementId:"G-9H3DGFHKJV"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+const loginPage=document.getElementById("loginPage"),app=document.getElementById("app"),msg=document.getElementById("msg");
+
+function showMsg(t){msg.textContent=t;msg.style.display="block"}
+document.getElementById("loginBtn").onclick=async function(){
+ const email=document.getElementById("email").value.trim(),pass=document.getElementById("password").value;
+ if(!email||!pass){showMsg("Email aur password enter karo.");return}
+ try{await auth.signInWithEmailAndPassword(email,pass)}catch(e){console.error(e);showMsg("Login failed: "+e.message)}
+};
+document.getElementById("password").onkeydown=e=>{if(e.key==="Enter")document.getElementById("loginBtn").click()};
+document.getElementById("logout").onclick=()=>auth.signOut();
+document.getElementById("refresh").onclick=loadOrders;
+
+auth.onAuthStateChanged(user=>{
+ if(user){loginPage.style.display="none";app.style.display="block";loadOrders()}
+ else{loginPage.style.display="flex";app.style.display="none"}
+});
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]) )}
+function dt(v){let d=new Date(v);return isNaN(d)?"":d.toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"})}
+
+async function loadOrders(){
+ const box=document.getElementById("orders");box.innerHTML='<div class="empty">Loading orders...</div>';
+ try{
+  const s=await db.ref("orders").once("value"),raw=s.val()||{};
+  const list=Object.entries(raw).map(([id,o])=>({id,...o})).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+  total.textContent=list.length;
+  pending.textContent=list.filter(o=>(o.status||"Pending")==="Pending").length;
+  preparing.textContent=list.filter(o=>(o.status||"Pending")==="Preparing").length;
+  delivered.textContent=list.filter(o=>(o.status||"Pending")==="Delivered").length;
+  if(!list.length){box.innerHTML='<div class="empty"><h2>No orders yet 📦</h2></div>';return}
+  box.innerHTML=list.map(render).join("");
+ }catch(e){box.innerHTML='<div class="empty"><h2>Orders load nahi hue</h2><p>'+esc(e.message)+'</p></div>'}
+}
+function render(o){
+ const status=o.status||"Pending",items=Array.isArray(o.items)?o.items:[];
+ return '<div class="order"><div class="head"><div><h2>📦 Order</h2><div class="id">ID: '+esc(o.id)+'</div><div class="id">'+esc(dt(o.createdAt))+'</div></div><span class="status '+esc(status)+'">'+esc(status)+'</span></div>'+
+ '<div class="info"><div class="card"><span>Customer Name</span>'+esc(o.customerName)+'</div><div class="card"><span>Mobile</span>'+esc(o.customerPhone)+'</div><div class="card address"><span>Delivery Address</span>'+esc(o.deliveryAddress)+'</div></div>'+
+ '<div class="items"><h3>🍔 Ordered Items</h3>'+items.map(i=>'<div class="item"><span>'+esc(i.name)+' × '+esc(i.quantity)+'</span><b>₹'+(Number(i.price||0)*Number(i.quantity||0))+'</b></div>').join("")+
+ '<div class="total">Total: ₹'+Number(o.totalAmount||0)+'</div></div><div class="controls"><select id="s_'+esc(o.id)+'">'+["Pending","Accepted","Preparing","Delivered","Cancelled"].map(s=>'<option '+(s===status?"selected":"")+'>'+s+'</option>').join("")+'</select><button class="update" onclick="updateOrder(\''+esc(o.id)+'\')">Update Status</button><button class="delete" onclick="deleteOrder(\''+esc(o.id)+'\')">Delete</button></div></div>';
+}
+async function updateOrder(id){try{await db.ref("orders/"+id).update({status:document.getElementById("s_"+id).value});loadOrders()}catch(e){alert(e.message)}}
+async function deleteOrder(id){if(!confirm("Order delete karna hai?"))return;try{await db.ref("orders/"+id).remove();loadOrders()}catch(e){alert(e.message)}}
+</script>
+</body>
+</html>

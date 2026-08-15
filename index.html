@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mato Mart Restaurant</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+html{scroll-behavior:smooth}
+body{background:#f5f5f5;color:#222}
+header{background:#222;color:white;padding:15px 40px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1000}
+.logo{font-size:30px;font-weight:bold;color:orange}
+nav{display:flex;align-items:center}
+nav a{color:white;text-decoration:none;margin-left:20px}
+nav a:hover{color:orange}
+.cart-btn{margin-left:20px;background:orange;border:none;color:white;padding:10px 15px;border-radius:6px;cursor:pointer;font-weight:bold}
+.hero{height:90vh;background:url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600") center/cover;display:flex;justify-content:center;align-items:center}
+.hero div{background:rgba(0,0,0,.65);padding:40px;border-radius:10px;text-align:center;color:white}
+.hero h1{font-size:50px}.hero p{margin:20px 0;font-size:20px}
+.hero button{padding:15px 35px;background:orange;border:none;color:white;font-size:18px;cursor:pointer;border-radius:8px}
+.hero button:hover,.card button:hover{background:#e69500}
+section{padding:60px 40px}
+h2{text-align:center;margin-bottom:30px}
+.search-box{max-width:500px;margin:0 auto 30px}
+.search-box input{width:100%;padding:14px;border:1px solid #ccc;border-radius:8px;font-size:16px;outline:none}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+.card{background:white;border-radius:10px;overflow:hidden;box-shadow:0 5px 10px rgba(0,0,0,.2);transition:.3s}
+.card:hover{transform:translateY(-5px)}
+.card img{width:100%;height:200px;object-fit:cover}
+.card h3{padding:15px 15px 5px}.card p{padding:0 15px;color:red;font-size:20px;font-weight:bold}
+.card button{margin:15px;width:calc(100% - 30px);padding:12px;background:orange;border:none;color:white;cursor:pointer;border-radius:6px;font-size:15px}
+.about-text{text-align:center;max-width:800px;margin:auto;line-height:30px}
+.contact{text-align:center;line-height:35px}
+.cart-section{display:none;background:white;padding:40px;min-height:500px}
+.cart-container{max-width:900px;margin:auto}
+.cart-item{background:#f8f8f8;padding:20px;margin-bottom:15px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.cart-info h3{margin-bottom:8px}.cart-info p{color:red;font-weight:bold}
+.quantity{display:flex;align-items:center;gap:10px}
+.quantity button{width:35px;height:35px;border:none;background:orange;color:white;border-radius:5px;cursor:pointer;font-size:18px}
+.remove-btn{background:#e53935!important;width:auto!important;padding:8px 12px;margin-left:10px}
+.cart-total{background:#eee;padding:25px;border-radius:10px;text-align:right;margin-top:20px}
+.cart-total h2{margin-bottom:15px}
+.checkout-btn{background:green;color:white;border:none;padding:13px 25px;border-radius:6px;cursor:pointer;font-size:16px}
+.clear-btn{background:#e53935;color:white;border:none;padding:13px 25px;border-radius:6px;cursor:pointer;font-size:16px;margin-right:10px}
+.empty-cart{text-align:center;padding:50px}
+.checkout-box{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);justify-content:center;align-items:center;z-index:2000}
+.checkout-content{background:white;width:90%;max-width:500px;padding:30px;border-radius:12px}
+.checkout-content h2{margin-bottom:20px}
+.checkout-content input,.checkout-content textarea{width:100%;padding:12px;margin-bottom:15px;border:1px solid #ccc;border-radius:6px;outline:none}
+.checkout-content textarea{height:90px;resize:none}
+.place-order{width:100%;padding:13px;background:green;color:white;border:none;border-radius:6px;cursor:pointer;font-size:16px}
+.place-order:disabled{opacity:.6;cursor:not-allowed}
+.close-checkout{width:100%;padding:10px;margin-top:10px;background:#555;color:white;border:none;border-radius:6px;cursor:pointer}
+.status{display:none;text-align:center;margin:15px auto;max-width:600px;padding:12px;border-radius:8px}
+.status.success{display:block;background:#d9f7df;color:#126b2b}
+.status.error{display:block;background:#ffdede;color:#9b1c1c}
+footer{background:#222;color:white;text-align:center;padding:20px;margin-top:40px}
+@media(max-width:700px){
+header{padding:15px 20px;flex-direction:column;gap:15px}
+nav{flex-wrap:wrap;justify-content:center}
+nav a{margin:5px 8px}.cart-btn{margin-left:5px}
+.hero{height:75vh}.hero div{margin:20px;padding:30px 20px}.hero h1{font-size:35px}
+section{padding:40px 20px}.cart-section{padding:30px 20px}
+.cart-item{flex-direction:column;align-items:flex-start}.cart-total{text-align:center}
+}
+</style>
+</head>
+
+<body>
+<header>
+<div class="logo">🍔 Mato Mart</div>
+<nav>
+<a href="#" onclick="showHome()">Home</a>
+<a href="#menu" onclick="showHome()">Menu</a>
+<a href="#about" onclick="showHome()">About</a>
+<a href="#contact" onclick="showHome()">Contact</a>
+<button class="cart-btn" onclick="showCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
+</nav>
+</header>
+
+<div id="homePage">
+<div class="hero"><div>
+<h1>Welcome To Mato Mart</h1>
+<p>Fresh Food • Fast Delivery • Best Taste</p>
+<button onclick="scrollToMenu()">Order Now</button>
+</div></div>
+
+<section id="menu">
+<h2>Our Menu</h2>
+<div class="search-box"><input type="text" id="searchInput" placeholder="🔍 Search food..." onkeyup="searchFood()"></div>
+<div class="menu" id="menuContainer">
+
+<div class="card" data-name="Cheese Pizza"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600"><h3>Cheese Pizza</h3><p>₹299</p><button onclick="addToCart('Cheese Pizza',299)">Add To Cart</button></div>
+<div class="card" data-name="Burger"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58ab?w=600"><h3>Burger</h3><p>₹199</p><button onclick="addToCart('Burger',199)">Add To Cart</button></div>
+<div class="card" data-name="Chicken Biryani"><img src="https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=600"><h3>Chicken Biryani</h3><p>₹249</p><button onclick="addToCart('Chicken Biryani',249)">Add To Cart</button></div>
+<div class="card" data-name="Momos"><img src="https://images.unsplash.com/photo-1541696490-8744a5cdb96c?w=600"><h3>Momos</h3><p>₹149</p><button onclick="addToCart('Momos',149)">Add To Cart</button></div>
+<div class="card" data-name="French Fries"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=600"><h3>French Fries</h3><p>₹129</p><button onclick="addToCart('French Fries',129)">Add To Cart</button></div>
+<div class="card" data-name="Cold Coffee"><img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600"><h3>Cold Coffee</h3><p>₹99</p><button onclick="addToCart('Cold Coffee',99)">Add To Cart</button></div>
+<div class="card" data-name="Pasta"><img src="https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=600"><h3>Pasta</h3><p>₹219</p><button onclick="addToCart('Pasta',219)">Add To Cart</button></div>
+<div class="card" data-name="Grilled Sandwich"><img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=600"><h3>Grilled Sandwich</h3><p>₹179</p><button onclick="addToCart('Grilled Sandwich',179)">Add To Cart</button></div>
+<div class="card" data-name="Veg Thali"><img src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600"><h3>Veg Thali</h3><p>₹249</p><button onclick="addToCart('Veg Thali',249)">Add To Cart</button></div>
+<div class="card" data-name="Green Salad"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600"><h3>Green Salad</h3><p>₹139</p><button onclick="addToCart('Green Salad',139)">Add To Cart</button></div>
+
+</div>
+</section>
+
+<section id="about"><h2>About Mato Mart</h2><p class="about-text">Welcome to Mato Mart Restaurant.<br>We prepare fresh and delicious food using quality ingredients.<br>Our goal is to provide tasty food, fast delivery and the best service for every customer.</p></section>
+
+<section id="contact"><h2>Contact Us</h2><div class="contact">
+<p>📍 Mirzapur, Uttar Pradesh</p><p>📞 +91 9876543210</p><p>📧 contact@matomart.com</p><p>⏰ Open Everyday : 10:00 AM - 11:00 PM</p>
+</div></section>
+</div>
+
+<section class="cart-section" id="cartPage">
+<div class="cart-container">
+<h2>🛒 Your Cart</h2>
+<div id="cartItems"></div>
+<div class="cart-total">
+<h2>Total: ₹<span id="totalPrice">0</span></h2>
+<button class="clear-btn" onclick="clearCart()">Clear Cart</button>
+<button class="checkout-btn" onclick="openCheckout()">Proceed to Checkout</button>
+</div>
+</div>
+</section>
+
+<div class="checkout-box" id="checkoutBox">
+<div class="checkout-content">
+<h2>📦 Checkout</h2>
+<input type="text" id="customerName" placeholder="Enter your name">
+<input type="tel" id="customerPhone" placeholder="Enter mobile number">
+<textarea id="customerAddress" placeholder="Enter delivery address"></textarea>
+<button class="place-order" id="placeOrderBtn" onclick="placeOrder()">Place Order</button>
+<button class="close-checkout" onclick="closeCheckout()">Cancel</button>
+<div id="orderStatus" class="status"></div>
+</div>
+</div>
+
+<footer>
+<h3>Mato Mart Restaurant</h3>
+<p>Fresh Food | Fast Delivery | Best Quality</p>
+<p style="margin-top:10px;">© 2026 Mato Mart. All Rights Reserved.</p>
+</footer>
+
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+<script>
+/* ================= FIREBASE ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCYlCktyI9mOD4uY1W-bCoPSi4lM0l26zOU",
+  authDomain: "mato-mart.firebaseapp.com",
+  databaseURL: "https://mato-mart-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mato-mart",
+  storageBucket: "mato-mart.firebasestorage.app",
+  messagingSenderId: "762100540752",
+  appId: "1:762100540752:web:3f5d3c9f3dfe5326be3855",
+  measurementId: "G-9H3DGFHKJV"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+/* ================= CART ================= */
+let cart = JSON.parse(localStorage.getItem("matoCart")) || [];
+
+function saveCart(){
+  localStorage.setItem("matoCart", JSON.stringify(cart));
+}
+
+function addToCart(name,price){
+  const existingItem = cart.find(item => item.name === name);
+  if(existingItem) existingItem.quantity++;
+  else cart.push({name,price,quantity:1});
+  saveCart();
+  updateCartCount();
+  alert(name + " added to cart 🛒");
+}
+
+function updateCartCount(){
+  let count = 0;
+  cart.forEach(item => count += item.quantity);
+  document.getElementById("cartCount").innerText = count;
+}
+
+function showCart(){
+  document.getElementById("homePage").style.display="none";
+  document.getElementById("cartPage").style.display="block";
+  displayCart();
+  window.scrollTo(0,0);
+}
+
+function showHome(){
+  document.getElementById("homePage").style.display="block";
+  document.getElementById("cartPage").style.display="none";
+}
+
+function displayCart(){
+  const cartItems=document.getElementById("cartItems");
+  const totalPrice=document.getElementById("totalPrice");
+  cartItems.innerHTML="";
+
+  if(cart.length===0){
+    cartItems.innerHTML=`<div class="empty-cart"><h2>Your cart is empty 😔</h2><p>Add some delicious food first!</p><br><button class="checkout-btn" onclick="showHome();scrollToMenu();">Browse Menu</button></div>`;
+    totalPrice.innerText="0";
+    return;
+  }
+
+  let total=0;
+  cart.forEach((item,index)=>{
+    const itemTotal=item.price*item.quantity;
+    total+=itemTotal;
+    cartItems.innerHTML += `
+      <div class="cart-item">
+        <div class="cart-info"><h3>${item.name}</h3><p>₹${item.price} × ${item.quantity}</p></div>
+        <div class="quantity">
+          <button onclick="decreaseQuantity(${index})">−</button>
+          <span>${item.quantity}</span>
+          <button onclick="increaseQuantity(${index})">+</button>
+          <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+        </div>
+        <strong>₹${itemTotal}</strong>
+      </div>`;
+  });
+  totalPrice.innerText=total;
+}
+
+function increaseQuantity(index){
+  cart[index].quantity++;
+  saveCart(); displayCart(); updateCartCount();
+}
+
+function decreaseQuantity(index){
+  if(cart[index].quantity>1) cart[index].quantity--;
+  else cart.splice(index,1);
+  saveCart(); displayCart(); updateCartCount();
+}
+
+function removeItem(index){
+  cart.splice(index,1);
+  saveCart(); displayCart(); updateCartCount();
+}
+
+function clearCart(){
+  if(cart.length===0){alert("Cart is already empty.");return;}
+  if(confirm("Are you sure you want to clear the cart?")){
+    cart=[]; saveCart(); displayCart(); updateCartCount();
+  }
+}
+
+function searchFood(){
+  const input=document.getElementById("searchInput").value.toLowerCase();
+  document.querySelectorAll(".card").forEach(card=>{
+    const name=card.getAttribute("data-name").toLowerCase();
+    card.style.display=name.includes(input)?"block":"none";
+  });
+}
+
+function scrollToMenu(){
+  showHome();
+  setTimeout(()=>document.getElementById("menu").scrollIntoView({behavior:"smooth"}),100);
+}
+
+/* ================= CHECKOUT ================= */
+function openCheckout(){
+  if(cart.length===0){alert("Your cart is empty!");return;}
+  document.getElementById("checkoutBox").style.display="flex";
+}
+
+function closeCheckout(){
+  document.getElementById("checkoutBox").style.display="none";
+  hideOrderStatus();
+}
+
+function showOrderStatus(message,type){
+  const box=document.getElementById("orderStatus");
+  box.textContent=message;
+  box.className="status "+type;
+}
+
+function hideOrderStatus(){
+  const box=document.getElementById("orderStatus");
+  box.textContent="";
+  box.className="status";
+}
+
+/* ================= PLACE ORDER + FIREBASE ================= */
+async function placeOrder(){
+  const name=document.getElementById("customerName").value.trim();
+  const phone=document.getElementById("customerPhone").value.trim();
+  const address=document.getElementById("customerAddress").value.trim();
+  const button=document.getElementById("placeOrderBtn");
+
+  if(!name){alert("Please enter your name.");return;}
+  if(!phone){alert("Please enter your mobile number.");return;}
+  if(!/^[0-9]{10}$/.test(phone)){alert("Please enter a valid 10-digit mobile number.");return;}
+  if(!address){alert("Please enter your delivery address.");return;}
+  if(cart.length===0){alert("Your cart is empty!");return;}
+
+  let total=0;
+  cart.forEach(item=>total += item.price*item.quantity);
+
+  const orderData={
+    customerName:name,
+    customerPhone:phone,
+    deliveryAddress:address,
+    items:cart,
+    totalAmount:total,
+    status:"Pending",
+    createdAt:new Date().toISOString()
+  };
+
+  button.disabled=true;
+  button.textContent="Placing Order...";
+  hideOrderStatus();
+
+  try{
+    const newOrderRef=database.ref("orders").push();
+    await newOrderRef.set(orderData);
+
+    showOrderStatus("🎉 Order placed successfully! Your Order ID is "+newOrderRef.key,"success");
+
+    cart=[];
+    saveCart();
+    updateCartCount();
+    displayCart();
+
+    document.getElementById("customerName").value="";
+    document.getElementById("customerPhone").value="";
+    document.getElementById("customerAddress").value="";
+
+    setTimeout(()=>{
+      closeCheckout();
+      showHome();
+    },2500);
+
+  }catch(error){
+    console.error("Firebase order error:",error);
+    showOrderStatus("❌ Order save nahi hua. Internet aur Firebase Rules check karo.","error");
+  }finally{
+    button.disabled=false;
+    button.textContent="Place Order";
+  }
+}
+
+updateCartCount();
+</script>
+</body>
+</html>
