@@ -386,6 +386,9 @@ section{padding:90px 6%}
   transition:.25s;
 }
 .contact-card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
+.contact-link{display:block;text-decoration:none;color:inherit;cursor:pointer}
+.contact-link small{display:block;margin-top:9px;color:#ff6b35;font-weight:700}
+.contact-link:focus{outline:3px solid #ff6b3555;outline-offset:2px}
 .contact-card .icon{font-size:27px;margin-bottom:13px}
 .contact-card h3{font-size:15px;margin-bottom:7px}
 .contact-card p{font-size:13px;color:#777;line-height:1.5}
@@ -605,6 +608,21 @@ footer{
   .cart-title{font-size:38px}
   .checkout-content{padding:23px}
 }
+
+/* ===== AUTH / PROFILE / ORDERS ===== */
+.account-btn{border:0;background:#222;color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
+.auth-box{width:min(520px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 25px 80px #0005}
+.auth-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.auth-top h2{margin:0}.auth-close{background:#eee;border:0;border-radius:50%;width:38px;height:38px;font-size:22px;cursor:pointer}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}.auth-tab{padding:11px;border:1px solid #ddd;background:#f7f7f7;border-radius:10px;font-weight:800;cursor:pointer}.auth-tab.active{background:#ff6b35;color:#fff;border-color:#ff6b35}
+.auth-panel{display:none}.auth-panel.active{display:block}.auth-box input,.auth-box textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;margin:6px 0 12px;font:inherit}
+.auth-main-btn{width:100%;padding:13px;border:0;border-radius:11px;background:#ff6b35;color:#fff;font-weight:800;cursor:pointer}.auth-secondary{width:100%;padding:12px;border:1px solid #ddd;border-radius:11px;background:#fff;font-weight:700;cursor:pointer;margin-top:8px}
+.auth-msg{padding:10px;border-radius:10px;background:#fff3ed;color:#a83d10;margin:8px 0;display:none}.account-summary{display:grid;gap:10px}.account-card{padding:14px;background:#f7f7f7;border-radius:14px}.account-card small{display:block;color:#777;margin-bottom:4px}
+.role-pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#eee;font-size:12px;font-weight:800}.admin-link{background:#222!important;color:#fff!important}
+.orders-list{display:grid;gap:12px}.order-user-card{border:1px solid #eee;border-radius:15px;padding:14px}.order-user-head{display:flex;justify-content:space-between;gap:10px}
+.order-status-pill{padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800;background:#fff1c7}.order-items-line{color:#555;font-size:14px;margin-top:8px}.empty-orders{text-align:center;padding:25px;background:#f7f7f7;border-radius:15px;color:#666}
+@media(max-width:700px){.account-btn{padding:9px 10px}.auth-box{padding:18px}}
+
 </style>
 </head>
 
@@ -621,6 +639,7 @@ footer{
     <a href="#about" onclick="showHome()">About</a>
     <a href="#contact" onclick="showHome()">Contact</a>
     <button class="cart-btn" onclick="showCart()">🛒 Cart <span id="cartCount">0</span></button>
+    <button class="account-btn" onclick="openAccount()">👤 Account</button>
   </nav>
 </header>
 
@@ -857,8 +876,8 @@ footer{
       <p>Have a question or simply want to say hello? Reach out to us.</p>
     </div>
     <div class="contact-grid">
-      <div class="contact-card"><div class="icon">📍</div><h3>Visit Us</h3><p>Mirzapur, Uttar Pradesh</p></div>
-      <div class="contact-card"><div class="icon">📞</div><h3>Call Us</h3><p>+91 9876543210</p></div>
+      <a class="contact-card contact-link" href="https://www.google.com/maps/search/?api=1&query=Mirzapur%2C%20Uttar%20Pradesh" target="_blank" rel="noopener"><div class="icon">📍</div><h3>Visit Us</h3><p>Mirzapur, Uttar Pradesh</p><small>Open in Google Maps →</small></a>
+      <a class="contact-card contact-link" href="tel:+919876543210"><div class="icon">📞</div><h3>Call Us</h3><p>+91 9876543210</p><small>Tap to call →</small></a>
       <div class="contact-card"><div class="icon">⏰</div><h3>Opening Hours</h3><p>Everyday · 10:00 AM – 11:00 PM</p></div>
     </div>
   </section>
@@ -902,6 +921,42 @@ footer{
   </div>
 </div>
 
+
+<!-- ===== AUTH / PROFILE / MY ORDERS ===== -->
+<div class="auth-overlay" id="authOverlay" onclick="overlayClose(event)">
+  <div class="auth-box" onclick="event.stopPropagation()">
+    <div class="auth-top"><h2 id="authTitle">Login to Mato Mart</h2><button class="auth-close" onclick="closeAuth()">×</button></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="emailTab" onclick="switchAuthTab('email')">Email</button>
+      <button class="auth-tab" id="phoneTab" onclick="switchAuthTab('phone')">Mobile OTP</button>
+    </div>
+    <div class="auth-panel active" id="emailPanel">
+      <input id="authName" placeholder="Full name (for signup)">
+      <input id="authEmail" type="email" placeholder="Email address">
+      <input id="authPassword" type="password" placeholder="Password (min 6 characters)">
+      <button class="auth-main-btn" id="emailAction" onclick="emailAuth()">Login</button>
+      <button class="auth-secondary" id="emailModeBtn" onclick="toggleEmailMode()">New user? Create account</button>
+    </div>
+    <div class="auth-panel" id="phonePanel">
+      <input id="authPhone" type="tel" placeholder="+91 9876543210">
+      <div id="recaptcha-container"></div>
+      <button class="auth-main-btn" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
+      <div id="otpArea" style="display:none;margin-top:10px">
+        <input id="authOtp" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP">
+        <button class="auth-main-btn" onclick="verifyOTP()">Verify OTP</button>
+      </div>
+    </div>
+    <div class="auth-msg" id="authMsg"></div>
+  </div>
+</div>
+
+<div class="auth-overlay" id="accountOverlay" onclick="accountOverlayClose(event)">
+  <div class="auth-box" onclick="event.stopPropagation()">
+    <div class="auth-top"><h2>My Account</h2><button class="auth-close" onclick="closeAccount()">×</button></div>
+    <div id="accountContent"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <footer>
@@ -919,6 +974,7 @@ footer{
 </footer>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 
 <script>
@@ -1121,9 +1177,18 @@ async function placeOrder(){
   let total=0;
   cart.forEach(item=>total+=item.price*item.quantity);
 
+  const currentUser=firebase.auth().currentUser;
+  if(!currentUser){
+    showOrderStatus("Please login before placing an order.","error");
+    openAuth();
+    return;
+  }
+
   const orderData={
+    uid:currentUser.uid,
     customerName:name,
     customerPhone:phone,
+    customerEmail:currentUser.email||"",
     deliveryAddress:address,
     items:cart,
     totalAmount:total,
@@ -1172,5 +1237,214 @@ async function placeOrder(){
 
 updateCartCount();
 </script>
+
+<script>
+/* ================= AUTH / PROFILE / MY ORDERS UPGRADE ================= */
+const auth=firebase.auth();
+let authMode="login",otpConfirmation=null,recaptchaVerifier=null,currentProfile=null;
+
+function openAuth(){
+  document.getElementById("authOverlay").style.display="flex";
+  clearAuthMsg();
+  if(auth.currentUser){closeAuth();openAccount();}
+}
+function closeAuth(){document.getElementById("authOverlay").style.display="none"}
+function overlayClose(e){if(e.target.id==="authOverlay")closeAuth()}
+function clearAuthMsg(){const m=document.getElementById("authMsg");m.textContent="";m.style.display="none"}
+function authMessage(t){const m=document.getElementById("authMsg");m.textContent=t;m.style.display="block"}
+
+function switchAuthTab(tab){
+  document.getElementById("emailTab").classList.toggle("active",tab==="email");
+  document.getElementById("phoneTab").classList.toggle("active",tab==="phone");
+  document.getElementById("emailPanel").classList.toggle("active",tab==="email");
+  document.getElementById("phonePanel").classList.toggle("active",tab==="phone");
+  if(tab==="phone") setupRecaptcha();
+  clearAuthMsg();
+}
+function toggleEmailMode(){
+  authMode=authMode==="login"?"signup":"login";
+  document.getElementById("authTitle").textContent=authMode==="login"?"Login to Mato Mart":"Create your Mato Mart account";
+  document.getElementById("emailAction").textContent=authMode==="login"?"Login":"Create Account";
+  document.getElementById("emailModeBtn").textContent=authMode==="login"?"New user? Create account":"Already have an account? Login";
+  document.getElementById("authName").style.display=authMode==="login"?"none":"block";
+}
+function normalizePhone(v){v=v.trim().replace(/[\s-]/g,"");return /^\d{10}$/.test(v)?"+91"+v:v}
+
+async function emailAuth(){
+  clearAuthMsg();
+  const name=document.getElementById("authName").value.trim();
+  const email=document.getElementById("authEmail").value.trim();
+  const pass=document.getElementById("authPassword").value;
+  if(!email||!pass){authMessage("Email and password are required.");return}
+  if(pass.length<6){authMessage("Password must be at least 6 characters.");return}
+  try{
+    let cred;
+    if(authMode==="signup"){
+      if(!name){authMessage("Please enter your name.");return}
+      cred=await auth.createUserWithEmailAndPassword(email,pass);
+      await saveNewProfile(cred.user,{name,email,phone:""});
+    }else{
+      cred=await auth.signInWithEmailAndPassword(email,pass);
+      await ensureProfile(cred.user);
+    }
+    closeAuth();await openAccount();
+    showToast(authMode==="login"?"Welcome back!":"Account created successfully!");
+  }catch(e){console.error(e);authMessage(firebaseFriendlyError(e))}
+}
+
+function setupRecaptcha(){
+  if(recaptchaVerifier)return;
+  recaptchaVerifier=new firebase.auth.RecaptchaVerifier("recaptcha-container",{size:"normal"});
+  recaptchaVerifier.render().catch(()=>{});
+}
+async function sendOTP(){
+  clearAuthMsg();
+  const phone=normalizePhone(document.getElementById("authPhone").value);
+  if(!/^\+[1-9]\d{7,14}$/.test(phone)){authMessage("Enter a valid mobile number, e.g. +919876543210");return}
+  try{
+    setupRecaptcha();
+    otpConfirmation=await auth.signInWithPhoneNumber(phone,recaptchaVerifier);
+    document.getElementById("otpArea").style.display="block";
+    document.getElementById("sendOtpBtn").textContent="OTP Sent";
+    authMessage("OTP sent. Enter the code you received.");
+  }catch(e){
+    console.error(e);authMessage(firebaseFriendlyError(e));
+    if(recaptchaVerifier){recaptchaVerifier.clear();recaptchaVerifier=null}
+  }
+}
+async function verifyOTP(){
+  clearAuthMsg();
+  const otp=document.getElementById("authOtp").value.trim();
+  if(!otpConfirmation){authMessage("Send OTP first.");return}
+  if(!/^\d{6}$/.test(otp)){authMessage("Enter the 6-digit OTP.");return}
+  try{
+    const cred=await otpConfirmation.confirm(otp);
+    const existing=await database.ref("users/"+cred.user.uid).once("value");
+    if(!existing.exists()) await saveNewProfile(cred.user,{name:"",email:cred.user.email||"",phone:cred.user.phoneNumber||""});
+    else await ensureProfile(cred.user);
+    otpConfirmation=null;closeAuth();await openAccount();showToast("Mobile verified successfully!");
+  }catch(e){console.error(e);authMessage(firebaseFriendlyError(e))}
+}
+
+async function saveNewProfile(user,data){
+  await database.ref("users/"+user.uid).set({
+    name:data.name||user.displayName||"",
+    email:data.email||user.email||"",
+    phone:data.phone||user.phoneNumber||"",
+    role:"user",
+    createdAt:new Date().toISOString()
+  });
+}
+async function ensureProfile(user){
+  const ref=database.ref("users/"+user.uid),snap=await ref.once("value");
+  if(!snap.exists())await saveNewProfile(user,{name:user.displayName||"",email:user.email||"",phone:user.phoneNumber||""});
+  currentProfile=(await ref.once("value")).val()||{};
+  return currentProfile;
+}
+function firebaseFriendlyError(e){
+  const map={
+    "auth/invalid-credential":"Email/password is incorrect.",
+    "auth/user-not-found":"No account found with this email.",
+    "auth/wrong-password":"Incorrect password.",
+    "auth/email-already-in-use":"This email is already registered.",
+    "auth/weak-password":"Password is too weak.",
+    "auth/too-many-requests":"Too many attempts. Please try again later.",
+    "auth/invalid-phone-number":"Invalid phone number.",
+    "auth/quota-exceeded":"OTP quota exceeded. Try again later.",
+    "auth/captcha-check-failed":"Captcha failed. Please try again.",
+    "auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication."
+  };
+  return map[e&&e.code]||e.message||"Something went wrong. Please try again.";
+}
+
+async function openAccount(){
+  const u=auth.currentUser;
+  if(!u){openAuth();return}
+  await ensureProfile(u);
+  document.getElementById("accountOverlay").style.display="flex";
+  renderAccount();
+}
+function closeAccount(){document.getElementById("accountOverlay").style.display="none"}
+function accountOverlayClose(e){if(e.target.id==="accountOverlay")closeAccount()}
+function escHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+
+function renderAccount(){
+  const p=currentProfile||{},u=auth.currentUser,admin=p.role==="admin";
+  document.getElementById("accountContent").innerHTML=`
+    <div class="account-summary">
+      <div class="account-card"><small>Name</small><b>${escHtml(p.name||"Not set")}</b></div>
+      <div class="account-card"><small>Email</small><b>${escHtml(p.email||u.email||"Not set")}</b></div>
+      <div class="account-card"><small>Mobile</small><b>${escHtml(p.phone||u.phoneNumber||"Not set")}</b></div>
+      <div class="account-card"><small>Account role</small><span class="role-pill">${admin?"ADMIN":"CUSTOMER"}</span></div>
+      <button class="auth-main-btn" onclick="editProfile()">✏️ Edit Profile</button>
+      <button class="auth-secondary" onclick="openMyOrders()">📦 My Orders</button>
+      ${admin?'<button class="auth-secondary admin-link" onclick="location.href=\'admin.html\'">👑 Open Admin Dashboard</button>':""}
+      <button class="auth-secondary" onclick="auth.signOut();closeAccount();showToast('Logged out')">Logout</button>
+    </div>`;
+}
+function editProfile(){
+  const p=currentProfile||{};
+  document.getElementById("accountContent").innerHTML=`
+    <input id="editName" value="${escHtml(p.name||"")}" placeholder="Full name">
+    <input id="editPhone" value="${escHtml(p.phone||auth.currentUser?.phoneNumber||"")}" placeholder="Mobile number">
+    <button class="auth-main-btn" onclick="saveProfileEdit()">Save Profile</button>
+    <button class="auth-secondary" onclick="renderAccount()">Cancel</button>`;
+}
+async function saveProfileEdit(){
+  const name=document.getElementById("editName").value.trim();
+  const phone=document.getElementById("editPhone").value.trim().replace(/\s/g,"");
+  if(!name){showToast("Please enter your name");return}
+  if(phone&&!/^(\+91)?\d{10}$/.test(phone)){showToast("Enter a valid mobile number");return}
+  try{
+    await database.ref("users/"+auth.currentUser.uid).update({name,phone});
+    await ensureProfile(auth.currentUser);renderAccount();showToast("Profile updated");
+  }catch(e){showToast("Profile update failed")}
+}
+
+async function openMyOrders(){
+  const u=auth.currentUser;if(!u){openAuth();return}
+  const box=document.getElementById("accountContent");
+  box.innerHTML='<div class="empty-orders">Loading your orders...</div>';
+  try{
+    const snap=await database.ref("orders").orderByChild("uid").equalTo(u.uid).once("value");
+    const raw=snap.val()||{};
+    const orders=Object.entries(raw).map(([id,o])=>({id,...o})).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    if(!orders.length){
+      box.innerHTML='<div class="empty-orders">No orders yet. Place your first order 🍔</div><button class="auth-secondary" onclick="renderAccount()">← Back</button>';
+      return;
+    }
+    box.innerHTML='<div class="orders-list">'+orders.map(renderUserOrder).join("")+'</div><button class="auth-secondary" onclick="renderAccount()">← Back to Profile</button>';
+  }catch(e){
+    box.innerHTML='<div class="empty-orders">Orders load nahi hue.<br>'+escHtml(e.message)+'</div><button class="auth-secondary" onclick="renderAccount()">← Back</button>';
+  }
+}
+function renderUserOrder(o){
+  const items=Array.isArray(o.items)?o.items:[];
+  const names=items.map(i=>`${i.name} × ${i.quantity}`).join(", ");
+  const date=o.createdAt?new Date(o.createdAt).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}):"";
+  return `<div class="order-user-card"><div class="order-user-head"><div><b>Order #${escHtml(o.id)}</b><div style="color:#777;font-size:12px">${escHtml(date)}</div></div><span class="order-status-pill">${escHtml(o.status||"Pending")}</span></div><div class="order-items-line">${escHtml(names)}</div><div style="margin-top:8px"><b>Total: ₹${Number(o.totalAmount||0)}</b></div><div style="margin-top:6px;color:#666;font-size:13px">Delivery: ${escHtml(o.deliveryAddress||"")}</div></div>`;
+}
+
+/* Checkout requires a signed-in account. */
+const originalOpenCheckout=window.openCheckout;
+window.openCheckout=function(){
+  if(!auth.currentUser){showToast("Please login before checkout");openAuth();return}
+  if(typeof originalOpenCheckout==="function")originalOpenCheckout();
+};
+
+auth.onAuthStateChanged(async user=>{
+  if(!user)return;
+  try{
+    await ensureProfile(user);
+    const p=currentProfile||{};
+    const name=document.getElementById("customerName"),phone=document.getElementById("customerPhone");
+    if(name&&!name.value)name.value=p.name||"";
+    if(phone&&!phone.value)phone.value=(p.phone||user.phoneNumber||"").replace(/^\+91/,"");
+  }catch(e){console.error(e)}
+});
+
+toggleEmailMode();
+</script>
+
 </body>
 </html>
