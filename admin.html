@@ -12,7 +12,7 @@ input,select{width:100%;padding:13px;border:1px solid #ccc;border-radius:7px;mar
 button{border:0;border-radius:7px;padding:11px 15px;font-weight:bold;cursor:pointer}.loginBtn{width:100%;background:#078b0b;color:#fff;font-size:16px}
 .msg{display:none;margin-top:14px;padding:10px;border-radius:7px;background:#ffe0e0;color:#a00}
 .app{display:none}header{background:#222;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}.logo{font-size:23px;font-weight:bold;color:#ff9800}
-.actions{display:flex;gap:8px}.refresh{background:#ff9800;color:#fff}.logout,.delete{background:#e53935;color:#fff}
+.actions{display:flex;gap:8px}.refresh{background:#ff9800;color:#fff}.logout,.delete{background:#e53935;color:#fff}.shop{background:#078b0b;color:#fff}
 .container{max-width:1200px;margin:25px auto;padding:0 18px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}.stat{background:#fff;padding:18px;border-radius:10px;box-shadow:0 2px 8px #0001}.stat small{color:#777}.stat b{display:block;font-size:28px;margin-top:7px}
 .order{background:#fff;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 8px #0001}.head{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:13px}.id{font-size:12px;color:#777;word-break:break-all}.status{padding:7px 10px;border-radius:20px;font-size:12px;font-weight:bold;height:max-content}
 .Pending{background:#fff1c7;color:#805b00}.Accepted{background:#dff0ff;color:#075b99}.Preparing{background:#eadfff;color:#5b2a91}.Delivered{background:#d9f7df;color:#126b2b}.Cancelled{background:#ffdede;color:#a00}
@@ -30,7 +30,7 @@ button{border:0;border-radius:7px;padding:11px 15px;font-weight:bold;cursor:poin
 </div></div>
 
 <div id="app" class="app"><header><div class="logo">🍔 Mato Mart Admin</div>
-<div class="actions"><button class="refresh" id="refresh">↻ Refresh</button><button class="logout" id="logout">Logout</button></div></header>
+<div class="actions"><button class="refresh" id="refresh">↻ Refresh</button><button class="shop" id="shopBtn">🛒 Shop</button><button class="logout" id="logout">Logout</button></div></header>
 <div class="container">
 <div class="stats">
 <div class="stat"><small>Total Orders</small><b id="total">0</b></div>
@@ -70,10 +70,27 @@ document.getElementById("password").onkeydown=e=>{if(e.key==="Enter")document.ge
 document.getElementById("logout").onclick=()=>auth.signOut();
 document.getElementById("refresh").onclick=loadOrders;
 
-auth.onAuthStateChanged(user=>{
- if(user){loginPage.style.display="none";app.style.display="block";loadOrders()}
- else{loginPage.style.display="flex";app.style.display="none"}
+async function isAdmin(user){
+  if(!user) return false;
+  const snap=await db.ref("users/"+user.uid+"/role").once("value");
+  return snap.val()==="admin";
+}
+auth.onAuthStateChanged(async user=>{
+  if(!user){loginPage.style.display="flex";app.style.display="none";return}
+  try{
+    if(!(await isAdmin(user))){
+      await auth.signOut();
+      showMsg("This account is not an admin account.");
+      return;
+    }
+    loginPage.style.display="none";app.style.display="block";loadOrders();
+  }catch(e){
+    console.error(e);
+    await auth.signOut();
+    showMsg("Admin verification failed: "+e.message);
+  }
 });
+document.getElementById("shopBtn").onclick=()=>{location.href="index.html"};
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]) )}
 function dt(v){let d=new Date(v);return isNaN(d)?"":d.toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"})}
