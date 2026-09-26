@@ -927,8 +927,7 @@ footer{
   <div class="auth-box" onclick="event.stopPropagation()">
     <div class="auth-top"><h2 id="authTitle">Login to Mato Mart</h2><button class="auth-close" onclick="closeAuth()">×</button></div>
     <div class="auth-tabs">
-      <button class="auth-tab active" id="emailTab" onclick="switchAuthTab('email')">Email</button>
-      <button class="auth-tab" id="phoneTab" onclick="switchAuthTab('phone')">Mobile OTP</button>
+      <button class="auth-tab active" id="emailTab">Email & Password</button>
     </div>
     <div class="auth-panel active" id="emailPanel">
       <input id="authName" placeholder="Full name (for signup)">
@@ -936,15 +935,7 @@ footer{
       <input id="authPassword" type="password" placeholder="Password (min 6 characters)">
       <button class="auth-main-btn" id="emailAction" onclick="emailAuth()">Login</button>
       <button class="auth-secondary" id="emailModeBtn" onclick="toggleEmailMode()">New user? Create account</button>
-    </div>
-    <div class="auth-panel" id="phonePanel">
-      <input id="authPhone" type="tel" placeholder="+91 9876543210">
-      <div id="recaptcha-container"></div>
-      <button class="auth-main-btn" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
-      <div id="otpArea" style="display:none;margin-top:10px">
-        <input id="authOtp" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit OTP">
-        <button class="auth-main-btn" onclick="verifyOTP()">Verify OTP</button>
-      </div>
+      <p style="margin:10px 0 0;color:#777;font-size:12px;text-align:center">Login and account creation use Email + Password.</p>
     </div>
     <div class="auth-msg" id="authMsg"></div>
   </div>
@@ -980,7 +971,7 @@ footer{
 <script>
 /* ================= FIREBASE ================= */
 const firebaseConfig = {
-  apiKey: "AIzaSyCYkctyI9mOD4Uy1W-bCoPSi4lM0l26zOU",
+  apiKey: "AIzaSyCYlCktyI9mOD4uY1W-bCoPSi4lM0l26zOU",
   authDomain: "mato-mart.firebaseapp.com",
   databaseURL: "https://mato-mart-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "mato-mart",
@@ -1241,7 +1232,7 @@ updateCartCount();
 <script>
 /* ================= AUTH / PROFILE / MY ORDERS UPGRADE ================= */
 const auth=firebase.auth();
-let authMode="login",otpConfirmation=null,recaptchaVerifier=null,currentProfile=null;
+let authMode="login",currentProfile=null;
 
 function openAuth(){
   document.getElementById("authOverlay").style.display="flex";
@@ -1252,23 +1243,6 @@ function closeAuth(){document.getElementById("authOverlay").style.display="none"
 function overlayClose(e){if(e.target.id==="authOverlay")closeAuth()}
 function clearAuthMsg(){const m=document.getElementById("authMsg");m.textContent="";m.style.display="none"}
 function authMessage(t){const m=document.getElementById("authMsg");m.textContent=t;m.style.display="block"}
-
-function switchAuthTab(tab){
-  document.getElementById("emailTab").classList.toggle("active",tab==="email");
-  document.getElementById("phoneTab").classList.toggle("active",tab==="phone");
-  document.getElementById("emailPanel").classList.toggle("active",tab==="email");
-  document.getElementById("phonePanel").classList.toggle("active",tab==="phone");
-  if(tab==="phone") setupRecaptcha();
-  clearAuthMsg();
-}
-function toggleEmailMode(){
-  authMode=authMode==="login"?"signup":"login";
-  document.getElementById("authTitle").textContent=authMode==="login"?"Login to Mato Mart":"Create your Mato Mart account";
-  document.getElementById("emailAction").textContent=authMode==="login"?"Login":"Create Account";
-  document.getElementById("emailModeBtn").textContent=authMode==="login"?"New user? Create account":"Already have an account? Login";
-  document.getElementById("authName").style.display=authMode==="login"?"none":"block";
-}
-function normalizePhone(v){v=v.trim().replace(/[\s-]/g,"");return /^\d{10}$/.test(v)?"+91"+v:v}
 
 async function emailAuth(){
   clearAuthMsg();
@@ -1289,40 +1263,6 @@ async function emailAuth(){
     }
     closeAuth();await openAccount();
     showToast(authMode==="login"?"Welcome back!":"Account created successfully!");
-  }catch(e){console.error(e);authMessage(firebaseFriendlyError(e))}
-}
-
-function setupRecaptcha(){
-  if(recaptchaVerifier)return;
-  recaptchaVerifier=new firebase.auth.RecaptchaVerifier("recaptcha-container",{size:"normal"});
-  recaptchaVerifier.render().catch(()=>{});
-}
-async function sendOTP(){
-  clearAuthMsg();
-  const phone=normalizePhone(document.getElementById("authPhone").value);
-  if(!/^\+[1-9]\d{7,14}$/.test(phone)){authMessage("Enter a valid mobile number, e.g. +919876543210");return}
-  try{
-    setupRecaptcha();
-    otpConfirmation=await auth.signInWithPhoneNumber(phone,recaptchaVerifier);
-    document.getElementById("otpArea").style.display="block";
-    document.getElementById("sendOtpBtn").textContent="OTP Sent";
-    authMessage("OTP sent. Enter the code you received.");
-  }catch(e){
-    console.error(e);authMessage(firebaseFriendlyError(e));
-    if(recaptchaVerifier){recaptchaVerifier.clear();recaptchaVerifier=null}
-  }
-}
-async function verifyOTP(){
-  clearAuthMsg();
-  const otp=document.getElementById("authOtp").value.trim();
-  if(!otpConfirmation){authMessage("Send OTP first.");return}
-  if(!/^\d{6}$/.test(otp)){authMessage("Enter the 6-digit OTP.");return}
-  try{
-    const cred=await otpConfirmation.confirm(otp);
-    const existing=await database.ref("users/"+cred.user.uid).once("value");
-    if(!existing.exists()) await saveNewProfile(cred.user,{name:"",email:cred.user.email||"",phone:cred.user.phoneNumber||""});
-    else await ensureProfile(cred.user);
-    otpConfirmation=null;closeAuth();await openAccount();showToast("Mobile verified successfully!");
   }catch(e){console.error(e);authMessage(firebaseFriendlyError(e))}
 }
 
@@ -1349,9 +1289,6 @@ function firebaseFriendlyError(e){
     "auth/email-already-in-use":"This email is already registered.",
     "auth/weak-password":"Password is too weak.",
     "auth/too-many-requests":"Too many attempts. Please try again later.",
-    "auth/invalid-phone-number":"Invalid phone number.",
-    "auth/quota-exceeded":"OTP quota exceeded. Try again later.",
-    "auth/captcha-check-failed":"Captcha failed. Please try again.",
     "auth/operation-not-allowed":"This sign-in method is not enabled in Firebase Authentication."
   };
   return map[e&&e.code]||e.message||"Something went wrong. Please try again.";
